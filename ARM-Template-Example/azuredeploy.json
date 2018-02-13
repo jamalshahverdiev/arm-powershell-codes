@@ -1,0 +1,233 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "jsstaccType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "jsVMName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "jsVMAdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "jsVMAdminPassword": {
+      "type": "securestring"
+    },
+    "jsVMWindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ]
+    },
+    "firstZipPackage": {
+      "type": "string",
+      "minLength": 10,
+      "metadata": {
+        "description": "First Web App zip file."
+      }
+    },
+    "secondZipPackage": {
+      "type": "string",
+      "minLength": 10,
+      "metadata": {
+        "description": "Second Web App zip file."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    }},
+  "variables": {
+    "jsstaccName": "[concat('jsstacc', uniqueString(resourceGroup().id))]",
+    "jsVnetPrefix": "10.0.0.0/16",
+    "jsVnetSubnet1Name": "Subnet-1",
+    "jsVnetSubnet1Prefix": "10.0.0.0/24",
+    "jsVnetSubnet2Name": "Subnet-2",
+    "jsVnetSubnet2Prefix": "10.0.1.0/24",
+    "jsVMImagePublisher": "MicrosoftWindowsServer",
+    "jsVMImageOffer": "WindowsServer",
+    "jsVMOSDiskName": "jsVMOSDisk",
+    "jsVMVmSize": "Standard_D2_v2",
+    "jsVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'jsVnet')]",
+    "jsVMSubnetRef": "[concat(variables('jsVMVnetID'), '/subnets/', variables('jsVnetSubnet1Name'))]",
+    "jsVMStorageAccountContainerName": "vhds",
+    "jsVMNicName": "[concat(parameters('jsVMName'), 'NetworkInterface')]",
+    "jsDSCArchiveFolder": "DSC",
+    "jsDSCArchiveFileName": "jsDSC.zip"},
+  "resources": [
+    {
+      "name": "[variables('jsstaccName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[parameters('jsstaccType')]"
+      },
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "jsstacc"
+      },
+      "kind": "Storage"
+    },
+    {
+      "name": "jsVnet",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "jsVnet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('jsVnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('jsVnetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('jsVnetSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('jsVnetSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('jsVnetSubnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('jsVMNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', 'jsVnet')]"
+      ],
+      "tags": {
+        "displayName": "jsVMNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('jsVMSubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('jsVMName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('jsstaccName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('jsVMNicName'))]"
+      ],
+      "tags": {
+        "displayName": "jsVM"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('jsVMVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('jsVMName')]",
+          "adminUsername": "[parameters('jsVMAdminUsername')]",
+          "adminPassword": "[parameters('jsVMAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('jsVMImagePublisher')]",
+            "offer": "[variables('jsVMImageOffer')]",
+            "sku": "[parameters('jsVMWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "jsVMOSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('jsstaccName')), '2016-01-01').primaryEndpoints.blob, variables('jsVMStorageAccountContainerName'), '/', variables('jsVMOSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('jsVMNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "Microsoft.Powershell.DSC",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('jsVMName'))]"
+          ],
+          "tags": {
+            "displayName": "jsDSC"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'), '/', variables('jsDSCArchiveFolder'), '/', variables('jsDSCArchiveFileName'))]",
+                "script": "jsDSC.ps1",
+                "function": "Main"
+              },
+              "configurationArguments": {
+                "nodeName": "[parameters('jsVMName')]",
+                "firstZipPackage": "[concat(parameters('_artifactsLocation'), '/', 'Sites', '/', parameters('firstZipPackage'), parameters('_artifactsLocationSasToken'))]",
+                "secondZipPackage": "[concat(parameters('_artifactsLocation'), '/', 'Sites', '/', parameters('secondZipPackage'), parameters('_artifactsLocationSasToken'))]"
+              }
+            },
+            "protectedSettings": {
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]"
+            }
+          }
+        }
+      ]
+    }],
+  "outputs": {}
+}
