@@ -2,52 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "jsstaccType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_ZRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
-      ]
-    },
-    "jsVMName": {
-      "type": "string",
-      "minLength": 1
-    },
-    "jsVMAdminUserName": {
-      "type": "string",
-      "minLength": 1
-    },
-    "jsVMAdminPassword": {
-      "type": "securestring"
-    },
-    "jsVMWindowsOSVersion": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
-      "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter",
-        "Windows-Server-Technical-Preview"
-      ]
-    },
-    "firstZipPackage": {
-      "type": "string",
-      "minLength": 10,
-      "metadata": {
-        "description": "First Web App zip file."
-      }
-    },
-    "secondZipPackage": {
-      "type": "string",
-      "minLength": 10,
-      "metadata": {
-        "description": "Second Web App zip file."
-      }
-    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -59,7 +13,58 @@
       "metadata": {
         "description": "Auto-generated token to access _artifactsLocation"
       }
-    }},
+    },
+    "firstZipPackage": {
+      "type": "string",
+      "minLength": 10,
+      "metadata": {
+        "description": "First Web App zip file."
+      }
+    },
+    "jsPublicIPDnsName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "jsstaccType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "jsVMAdminPassword": {
+      "type": "securestring"
+    },
+    "jsVMAdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "jsVMName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "jsVMWindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ]
+    },
+    "secondZipPackage": {
+      "type": "string",
+      "minLength": 10,
+      "metadata": {
+        "description": "Second Web App zip file."
+      }
+    }
+  },
   "variables": {
     "jsstaccName": "[concat('jsstacc', uniqueString(resourceGroup().id))]",
     "jsVnetPrefix": "10.0.0.0/16",
@@ -76,7 +81,10 @@
     "jsVMStorageAccountContainerName": "vhds",
     "jsVMNicName": "[concat(parameters('jsVMName'), 'NetworkInterface')]",
     "jsDSCArchiveFolder": "DSC",
-    "jsDSCArchiveFileName": "jsDSC.zip"},
+    "jsDSCArchiveFileName": "jsDSC.zip",
+    "jsPublicIPName": "jsPublicIP",
+    "jsWebDeployScriptFolder": "Scripts",
+    "jsWebDeployScriptFileName": "jsWebDeploy.ps1"},
   "resources": [
     {
       "name": "[variables('jsstaccName')]",
@@ -129,7 +137,8 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-03-30",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/virtualNetworks', 'jsVnet')]"
+        "[resourceId('Microsoft.Network/virtualNetworks', 'jsVnet')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('jsPublicIPName'))]"
       ],
       "tags": {
         "displayName": "jsVMNic"
@@ -142,6 +151,9 @@
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[variables('jsVMSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('jsPublicIPName'))]"
               }
             }
           }
@@ -218,16 +230,57 @@
               },
               "configurationArguments": {
                 "nodeName": "[parameters('jsVMName')]",
-                "firstZipPackage": "[concat(parameters('_artifactsLocation'), '/', 'Sites', '/', parameters('firstZipPackage'), parameters('_artifactsLocationSasToken'))]",
-                "secondZipPackage": "[concat(parameters('_artifactsLocation'), '/', 'Sites', '/', parameters('secondZipPackage'), parameters('_artifactsLocationSasToken'))]"
+                "firstZipPackage": "[concat(parameters('_artifactsLocation'), '/', 'Temps', '/', parameters('firstZipPackage'), parameters('_artifactsLocationSasToken'))]",
+                "secondZipPackage": "[concat(parameters('_artifactsLocation'), '/', 'Temps', '/', parameters('secondZipPackage'), parameters('_artifactsLocationSasToken'))]"
               }
             },
             "protectedSettings": {
               "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]"
             }
           }
+        },
+        {
+          "name": "jsWebDeploy",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('jsVMName'))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('jsVMName'), 'Microsoft.Powershell.DSC')]"
+          ],
+          "tags": {
+            "displayName": "jsWebDeploy"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('jsWebDeployScriptFolder'), '/', variables('jsWebDeployScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('jsWebDeployScriptFolder'), '/', variables('jsWebDeployScriptFileName'), ' -firstZipPack ', parameters('firstZipPackage'), ' -secondZipPack ', parameters('secondZipPackage'))]"
+            }
+          }
         }
       ]
+    },
+    {
+      "name": "[variables('jsPublicIPName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "jsPublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('jsPublicIPDnsName')]"
+        }
+      }
     }],
   "outputs": {}
 }
