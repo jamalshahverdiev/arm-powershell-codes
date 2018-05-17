@@ -1,11 +1,6 @@
 * ![Create, Export and Import database with Azure PowerShell](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Azure-RG-Create-Export-Import-Database.md)
-
 * ![Check DSC in the local server](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/DSC-check-from-Local.md)
-
 * ![Deploy ARM template with PowerShell](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Deploy-ARM-Template-with-PowerShell.md)
-
 * ![Install Modules](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Install-Modules.md)
-
 * ![Login with Json file](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Login-with-Json-file.md)
-
 * ![Azure Storage examples](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Storage-Account-example.md)
