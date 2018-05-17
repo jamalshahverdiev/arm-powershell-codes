@@ -7,6 +7,12 @@ PS C:\Users\jamal.shahverdiyev> Install-Module Azure -Force
 ### Login with credentials to the azure portal:
 ```powershell
 PS C:\Users\jamal.shahverdiyev\sitecoremigration> Login-AzureRmAccount
+<p align="center">
+  <img width="460" height="300" src="https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Images/login-to-az1.png/460/300">
+</p>
+<p align="center">
+  <img width="460" height="300" src="https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Images/login-to-az2.png/460/300">
+</p>
 ![loginPhoto1](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Images/login-to-az1.png)
 ![loginPhoto2](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Images/login-to-az2.png) 
 ```
