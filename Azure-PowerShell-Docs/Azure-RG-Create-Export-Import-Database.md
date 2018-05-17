@@ -77,6 +77,8 @@
 > New-AzureRmSqlDatabaseExport -ResourceGroupName $resourcegroupname -ServerName $servername -DatabaseName $databasename -StorageKeyType "StorageAccessKey" -StorageKey $accountKey -StorageUri "https://$getstoragename.blob.core.windows.net/$container_name/$databasename.bacpac" -AdministratorLogin $adminlogin -AdministratorLoginPassword $pwd
 ```
 
+
+
 ## Import database from bacpac file:
 ### Set variables:
 ```powershell
