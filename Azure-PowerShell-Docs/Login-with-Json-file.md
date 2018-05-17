@@ -7,8 +7,8 @@ PS C:\Users\jamal.shahverdiyev> Install-Module Azure -Force
 ### Login with credentials to the azure portal:
 ```powershell
 PS C:\Users\jamal.shahverdiyev\sitecoremigration> Login-AzureRmAccount
-[loginPhoto1](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Images/login-to-az1.png)
-[loginPhoto2](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Images/login-to-az2.png) 
+![loginPhoto1](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Images/login-to-az1.png)
+![loginPhoto2](https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Images/login-to-az2.png) 
 ```
 
 ### Login to the azure and save result to the json file (Execute command inside of "()" symbols and give output as argument to the "-Profile"):
