@@ -35,8 +35,8 @@ Parameters              :
                           vmSize           String                     Standard_D1
 
 Outputs                 :
-DeploymentDebugLogLevel : ``
-
+DeploymentDebugLogLevel :
+```
 
 
 ### Delete new deployment:
