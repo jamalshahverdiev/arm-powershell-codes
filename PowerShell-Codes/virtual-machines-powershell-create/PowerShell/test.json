@@ -1,0 +1,4 @@
+{
+   "VmName" : "TestVM",
+   "ResourceGroup" : "AzureAutomationTest"
+}

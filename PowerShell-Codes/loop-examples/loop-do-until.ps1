@@ -1,0 +1,1 @@
+$i = 7; do { write-host $i; $i +=7 } until ($i -gt 85)

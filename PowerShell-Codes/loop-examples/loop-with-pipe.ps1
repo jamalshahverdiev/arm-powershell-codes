@@ -1,0 +1,1 @@
+Get-Service | Foreach {$_.name + " Status:-" + $_.status}
