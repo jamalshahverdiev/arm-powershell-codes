@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "winrmVMName": { "value": "winrmVM" },
+    "winrmVMAdminUserName": { "value": "winrmadmin" },
+    "winrmVMAdminPassword": { "value": "WinRM@dminp@$$w0rd" },
+    "winrmPublicIPDnsName": { "value": "winrmdnsadim" },
+    "winrmScriptUrl": { "value": "ConfigureWinRM.ps1" },
+    "makeCertExeUrl": { "value": "makecert.exe" }
+  }
+}

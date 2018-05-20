@@ -1,0 +1,293 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "winrmstraccType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "winrmVMName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "winrmVMAdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "winrmVMAdminPassword": {
+      "type": "securestring"
+    },
+    "winrmVMWindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ]
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "winrmPublicIPDnsName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "winrmScriptUrl": {
+      "type": "string",
+      "minLength": 10,
+      "metadata": {
+        "description": "The script to install and configure WinRM."
+      }
+    },
+    "makeCertExeUrl": {
+      "type": "string",
+      "minLength": 7,
+      "metadata": {
+        "description": "Exe file to create certificate."
+      }
+    }
+  },
+  "variables": {
+    "winrmstraccName": "[concat('winrmstracc', uniqueString(resourceGroup().id))]",
+    "winrmSnetPrefix": "10.0.0.0/16",
+    "winrmSnetSubnet1Name": "Subnet-1",
+    "winrmSnetSubnet1Prefix": "10.0.0.0/24",
+    "winrmSnetSubnet2Name": "Subnet-2",
+    "winrmSnetSubnet2Prefix": "10.0.1.0/24",
+    "winrmVMImagePublisher": "MicrosoftWindowsServer",
+    "winrmVMImageOffer": "WindowsServer",
+    "winrmVMOSDiskName": "winrmVMOSDisk",
+    "winrmVMVmSize": "Standard_D2_v2",
+    "winrmVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'winrmSnet')]",
+    "winrmVMSubnetRef": "[concat(variables('winrmVMVnetID'), '/subnets/', variables('winrmSnetSubnet1Name'))]",
+    "winrmVMStorageAccountContainerName": "vhds",
+    "winrmVMNicName": "[concat(parameters('winrmVMName'), 'NetworkInterface')]",
+    "winrmDSCArchiveFolder": "DSC",
+    "winrmDSCArchiveFileName": "winrmDSC.zip",
+    "winrmScriptScriptFolder": "CustomScripts",
+    "winrmScriptScriptFileName": "winrmScript.ps1",
+    "winrmPublicIPName": "winrmPublicIP"
+  },
+  "resources": [
+    {
+      "name": "[variables('winrmstraccName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[parameters('winrmstraccType')]"
+      },
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "winrmstracc"
+      },
+      "kind": "Storage"
+    },
+    {
+      "name": "winrmSnet",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "winrmSnet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('winrmSnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('winrmSnetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('winrmSnetSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('winrmSnetSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('winrmSnetSubnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('winrmVMNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', 'winrmSnet')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('winrmPublicIPName'))]"
+      ],
+      "tags": {
+        "displayName": "winrmVMNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('winrmVMSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('winrmPublicIPName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('winrmVMName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('winrmstraccName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('winrmVMNicName'))]"
+      ],
+      "tags": {
+        "displayName": "winrmVM"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('winrmVMVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('winrmVMName')]",
+          "adminUsername": "[parameters('winrmVMAdminUsername')]",
+          "adminPassword": "[parameters('winrmVMAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('winrmVMImagePublisher')]",
+            "offer": "[variables('winrmVMImageOffer')]",
+            "sku": "[parameters('winrmVMWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "winrmVMOSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('winrmstraccName')), '2016-01-01').primaryEndpoints.blob, variables('winrmVMStorageAccountContainerName'), '/', variables('winrmVMOSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('winrmVMNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "Microsoft.Powershell.DSC",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('winrmVMName'))]"
+          ],
+          "tags": {
+            "displayName": "winrmDSC"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'), '/', variables('winrmDSCArchiveFolder'), '/', variables('winrmDSCArchiveFileName'))]",
+                "script": "winrmDSC.ps1",
+                "function": "Main"
+              },
+              "configurationArguments": {
+                "nodeName": "[parameters('winrmVMName')]",
+                "winrmScriptUrl": "[concat(parameters('_artifactsLocation'), '/', 'CustomScripts', '/', parameters('winrmScriptUrl'), parameters('_artifactsLocationSasToken'))]",
+                "makeCertExeUrl": "[concat(parameters('_artifactsLocation'), '/', 'CustomScripts', '/', parameters('makeCertExeUrl'), parameters('_artifactsLocationSasToken'))]"
+              }
+            },
+            "protectedSettings": {
+              "configurationUrlSasToken": "[parameters('_artifactsLocationSasToken')]"
+            }
+          }
+        },
+        {
+          "name": "winrmScript",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('winrmVMName'))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('winrmVMName'), 'Microsoft.Powershell.DSC')]"
+          ],
+          "tags": {
+            "displayName": "winrmScript"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('winrmScriptScriptFolder'), '/', variables('winrmScriptScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('winrmScriptScriptFolder'), '/', variables('winrmScriptScriptFileName'), ' -fqdn ', reference(variables('winrmPublicIPName')).dnsSettings.fqdn)]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('winrmPublicIPName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "winrmPublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('winrmPublicIPDnsName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "teamcityServerName": {
+      "type": "string",
+      "value": "[reference(variables('winrmPublicIPName')).dnsSettings.fqdn]"
+    }
+  }
+}
