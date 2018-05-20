@@ -13,7 +13,7 @@ PS C:\Users\jamal.shahverdiyev\sitecoremigration> Login-AzureRmAccount
 
 ### Login to the azure and save result to the json file (Execute command inside of "()" symbols and give output as argument to the "-Profile"):
 ```powershell
-PS C:\PowerShell> Save-AzureRmContext -Profile (Add-AzureRmAccount) -Path C:\PowerShell\AvanadeCredentials.json
+PS C:\PowerShell> Save-AzureRmContext -Profile (Add-AzureRmAccount) -Path C:\PowerShell\Credentials.json
 ```
 
 ### Get Current Profile information:
@@ -22,7 +22,7 @@ PS C:\PowerShell> Get-AzureRmContext
 Name             : Default
 Account          : jamal.shahverdiev@gmail.com
 SubscriptionName : Microsoft Azure Enterprise
-TenantId         : 8f2ae161-8be5-48e8-99af-d827210c2f1e
+TenantId         : XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 Environment      : AzureCloud
 ```
 
@@ -33,13 +33,13 @@ ResourceGroupName : cloud-shell-storage-southeastasia
 Location          : southeastasia
 ProvisioningState : Succeeded
 Tags              :
-ResourceId        : /subscriptions/7739e5e8-222a-46c5-b26f-5d7191b4e5b6/resourceGroups/cloud-shell-storage-southeastasia
+ResourceId        : /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/6resourceGroups/cloud-shell-storage-southeastasia
 
 ResourceGroupName : JSRG
 Location          : westeurope
 ProvisioningState : Succeeded
 Tags              :
-ResourceId        : /subscriptions/7739e5e8-222a-46c5-b26f-5d7191b4e5b6/resourceGroups/JSRG
+ResourceId        : /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/JSRG
 ```
 
 ### Remove account and then check resource groups to be sure it is not working:
@@ -47,13 +47,13 @@ ResourceId        : /subscriptions/7739e5e8-222a-46c5-b26f-5d7191b4e5b6/resource
 PS C:\PowerShell> Remove-AzureRmAccount
 Id                    : jamal.shahverdiev@gmail.com
 Type                  : User
-Tenants               : {8f2ae161-8be5-48e8-99af-d827210c2f1e, defd874c-de77-4eed-8d0d-2306267e4070}
+Tenants               : {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX, XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
 AccessToken           :
 Credential            :
 TenantMap             : {}
 CertificateThumbprint :
-ExtendedProperties    : {[Subscriptions, 7739e5e8-222a-46c5-b26f-5d7191b4e5b6], [Tenants,
-                        8f2ae161-8be5-48e8-99af-d827210c2f1e,defd874c-de77-4eed-8d0d-2306267e4070]}
+ExtendedProperties    : {[Subscriptions, XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX], [Tenants,
+                        XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX,XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX]}
 
 
 PS C:\PowerShell> Get-AzureRmResourceGroup
@@ -67,14 +67,14 @@ At line:1 char:1
 
 ### Import credentials from Json file and then look at the Resource group list(I have deleted some of resource groups from output 😊):
 ```powershell
-PS C:\PowerShell> Import-AzureRmContext -path C:\PowerShell\AvanadeCredentials.json
+PS C:\PowerShell> Import-AzureRmContext -path C:\PowerShell\Credentials.json
 Account          : jamal.shahverdiev@gmail.com
 SubscriptionName : Microsoft Azure Enterprise
-SubscriptionId   : 7739e5e8-222a-46c5-b26f-5d7191b4e5b6
-TenantId         : 8f2ae161-8be5-48e8-99af-d827210c2f1e
+SubscriptionId   : XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+TenantId         : XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 Environment      : AzureCloud
 
-Or: Import-AzureRmContext -path (Get-ChildItem .\AvanadeCredentials.json).FullName
+Or: Import-AzureRmContext -path (Get-ChildItem .\Credentials.json).FullName
 ```
 
 ```powershell
@@ -83,11 +83,11 @@ ResourceGroupName : cloud-shell-storage-southeastasia
 Location          : southeastasia
 ProvisioningState : Succeeded
 Tags              :
-ResourceId        : /subscriptions/7739e5e8-222a-46c5-b26f-5d7191b4e5b6/resourceGroups/cloud-shell-storage-southeastasia
+ResourceId        : /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/cloud-shell-storage-southeastasia
 
 ResourceGroupName : JSRG
 Location          : westeurope
 ProvisioningState : Succeeded
 Tags              :
-ResourceId        : /subscriptions/7739e5e8-222a-46c5-b26f-5d7191b4e5b6/resourceGroups/JSRG
+ResourceId        : /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/JSRG
 ```
