@@ -5,3 +5,4 @@
 * `Login with Json file <https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Login-with-Json-file.md>`_
 * `Azure Storage examples <https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Storage-Account-example.md>`_
 * `Install and configure WinRM <https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/WinRM/README.md>`_
+* `Azure RM with Microsoft Visual Studio <https://jamalshahverdiev.wordpress.com/2018/02/15/arm-templates-with-microsot-visual-studio-2017/>`_
