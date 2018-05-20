@@ -6,3 +6,4 @@
 * `Azure Storage examples <https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/Storage-Account-example.md>`_
 * `Install and configure WinRM <https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/WinRM/README.md>`_
 * `Azure RM with Microsoft Visual Studio <https://jamalshahverdiev.wordpress.com/2018/02/15/arm-templates-with-microsot-visual-studio-2017/>`_
+* `PowerShell Modules <https://github.com/jamalshahverdiev/arm-powershell-codes/blob/master/Azure-PowerShell-Docs/PowerShell-Modules.md>`_
