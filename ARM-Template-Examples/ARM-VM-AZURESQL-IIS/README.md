@@ -23,4 +23,4 @@ OutputsString           :
 ##### Just open links in your browser:
 ##### http://jsarmvmdns.westeurope.cloudapp.azure.com:10080 and http://jsarmvmdns.westeurope.cloudapp.azure.com:10081
 
-##### Output must be as: *"TestUser"*
+##### Response must be as: *"TestUser"*
