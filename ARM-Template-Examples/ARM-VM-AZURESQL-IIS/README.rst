@@ -1,2 +1,8 @@
+### Deploy Windows VM with IIS server and 2 sites which will communicate with Azure SQL server databases for each of sites.
 
-* `Read this article to deploy <https://jamalshahverdiev.wordpress.com/2018/02/15/arm-templates-with-microsot-visual-studio-2017/>`_
+#### To deploy just execute the following command:
+```powershell
+> .\Deploy-AzureResourceGroup.ps1 -UploadArtifacts
+```
+
+
