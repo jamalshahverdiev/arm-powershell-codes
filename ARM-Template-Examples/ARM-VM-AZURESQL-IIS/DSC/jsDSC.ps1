@@ -2,8 +2,7 @@ Configuration Main
 {
 
 Param ( [string] $nodeName, 
-  [string] $firstZipPackage,
-  [string] $secondZipPackage 
+  [string] $artifact
   )
 
 Import-DscResource -ModuleName xWebAdministration
@@ -14,22 +13,17 @@ Node $nodeName
   {
     File FirstWebAppFolder {
         Type = 'Directory'
-        DestinationPath = 'C:\inetpub\firstwebapp'
+        DestinationPath = 'C:\inetpub\site01'
         Ensure = "Present"
     }
     File SecondWebAppFolder {
         Type = 'Directory'
-        DestinationPath = 'C:\inetpub\secondwebapp'
+        DestinationPath = 'C:\inetpub\site02'
         Ensure = "Present"
     }
-    xRemoteFile firstZipDownload {
-        Uri = "$firstZipPackage"
-        DestinationPath = "C:\Software\FirstSite.zip"
-        MatchSource = $true
-    }
-    xRemoteFile secondZipDownload {
-        Uri = "$secondZipPackage"
-        DestinationPath = "C:\Software\SecondSite.zip"
+    xRemoteFile ArtifactDownload {
+        Uri = "$artifact"
+        DestinationPath = "C:\Software\site-artifact.zip"
         MatchSource = $true
     }
     WindowsFeature WebServerRole
@@ -66,7 +60,7 @@ Node $nodeName
         Ensure          = "Present"
         Name            = "First Web Site"
         State           = "Started"
-        PhysicalPath    = "C:\inetpub\firstwebapp"
+        PhysicalPath    = "C:\inetpub\site01"
         ApplicationPool = "firstwebpool"
         BindingInfo = MSFT_xWebBindingInformation
         {
@@ -86,7 +80,7 @@ Node $nodeName
         Ensure          = "Present"
         Name            = "Second Web Site"
         State           = "Started"
-        PhysicalPath    = "C:\inetpub\secondwebapp"
+        PhysicalPath    = "C:\inetpub\site02"
         ApplicationPool = "secondwebpool"
         BindingInfo = MSFT_xWebBindingInformation
         {

@@ -2,7 +2,7 @@
 
 Param(
     [string] $ResourceGroupLocation = 'westeurope',
-    [string] $ResourceGroupName = 'jsAzureRG',
+    [string] $ResourceGroupName = 'jsAzureRG1',
     [switch] $UploadArtifacts,
     [string] $StorageAccountName,
     [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts',
@@ -18,7 +18,7 @@ try {
 }
 catch { }
 
-Import-AzureRmContext -path (Get-ChildItem .\AzureCreds.json).FullName
+#Import-AzureRmContext -path (Get-ChildItem .\AzureCreds.json).FullName
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 3
@@ -66,7 +66,7 @@ if ($UploadArtifacts) {
 
     # Create the storage account if it doesn't already exist
     if ($StorageAccount -eq $null) {
-        $StorageResourceGroupName = 'ARM_Deploy_Staging_RG'
+        $StorageResourceGroupName = 'jsAzure_StagingSQLRG1'
         New-AzureRmResourceGroup -Location "$ResourceGroupLocation" -Name $StorageResourceGroupName -Force
         $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
     }

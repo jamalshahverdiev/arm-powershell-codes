@@ -6,7 +6,9 @@
     "jsVMAdminUserName": { "value": "jsAdmin" },
     "jsVMAdminPassword": { "value": "jsAdminp@$$w0rd" },
     "jsPublicIPDnsName": { "value": "jsarmvmdns" },
-    "firstZipPackage": { "value": "FirstSite.zip" },
-    "secondZipPackage": { "value": "SecondSite.zip" }
+    "sqldscsitedeployAdminLogin": { "value": "sqladmin" },
+    "sqldscsitedeployAdminLoginPassword": { "value": "Sqltyfhjkugt7ty9875ftj7rfytcrfdf" },
+    "artifact": { "value": "site-artifact.zip" },
+    "dbName": { "value": "newdb0" }
   }
 }

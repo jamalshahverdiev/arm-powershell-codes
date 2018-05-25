@@ -14,11 +14,11 @@
         "description": "Auto-generated token to access _artifactsLocation"
       }
     },
-    "firstZipPackage": {
+    "artifact": {
       "type": "string",
       "minLength": 10,
       "metadata": {
-        "description": "First Web App zip file."
+        "description": "Web App artifact Zip file."
       }
     },
     "jsPublicIPDnsName": {
@@ -57,11 +57,82 @@
         "Windows-Server-Technical-Preview"
       ]
     },
-    "secondZipPackage": {
+    "sqldscsitedeployAdminLogin": {
       "type": "string",
-      "minLength": 10,
+      "minLength": 1
+    },
+    "sqldscsitedeployAdminLoginPassword": {
+      "type": "securestring"
+    },
+    "dbName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "db01Collation": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    "db01Edition": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ]
+    },
+    "db01RequestedServiceObjectiveName": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "S0",
+        "S1",
+        "S2",
+        "P1",
+        "P2",
+        "P3"
+      ],
       "metadata": {
-        "description": "Second Web App zip file."
+        "description": "Describes the performance level for Edition"
+      }
+    },
+    "db02Collation": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    "db02Edition": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ]
+    },
+    "db02RequestedServiceObjectiveName": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "S0",
+        "S1",
+        "S2",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "metadata": {
+        "description": "Describes the performance level for Edition"
+      }
+    },
+    "sitesNSG": {
+      "type": "string",
+      "defaultValue": "WebSrvNSG",
+      "metadata": {
+        "description": "Network Security Group for Sites"
       }
     }
   },
@@ -84,7 +155,8 @@
     "jsDSCArchiveFileName": "jsDSC.zip",
     "jsPublicIPName": "jsPublicIP",
     "jsWebDeployScriptFolder": "Scripts",
-    "jsWebDeployScriptFileName": "jsWebDeploy.ps1"},
+    "jsWebDeployScriptFileName": "jsWebDeploy.ps1",
+    "sqldscsitedeployName": "[concat('sqldscsitedeploy', uniqueString(resourceGroup().id))]"},
   "resources": [
     {
       "name": "[variables('jsstaccName')]",
@@ -138,7 +210,8 @@
       "apiVersion": "2016-03-30",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', 'jsVnet')]",
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('jsPublicIPName'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('jsPublicIPName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('sitesNSG'))]"
       ],
       "tags": {
         "displayName": "jsVMNic"
@@ -155,6 +228,36 @@
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('jsPublicIPName'))]"
               }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('sitesNSG'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2017-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('sitesNSG')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NSG - Front End"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "webazsql-rule",
+            "properties": {
+              "description": "Allow WEB",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRanges": [ "10080","10081","3389","80","443" ],
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
             }
           }
         ]
@@ -230,8 +333,7 @@
               },
               "configurationArguments": {
                 "nodeName": "[parameters('jsVMName')]",
-                "firstZipPackage": "[concat(parameters('_artifactsLocation'), '/', 'Temps', '/', parameters('firstZipPackage'), parameters('_artifactsLocationSasToken'))]",
-                "secondZipPackage": "[concat(parameters('_artifactsLocation'), '/', 'Temps', '/', parameters('secondZipPackage'), parameters('_artifactsLocationSasToken'))]"
+                "artifact": "[concat(parameters('_artifactsLocation'), '/', 'Temps', '/', parameters('artifact'), parameters('_artifactsLocationSasToken'))]"
               }
             },
             "protectedSettings": {
@@ -246,7 +348,9 @@
           "apiVersion": "2016-03-30",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('jsVMName'))]",
-            "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('jsVMName'), 'Microsoft.Powershell.DSC')]"
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('jsVMName'), 'Microsoft.Powershell.DSC')]",
+            "[concat('Microsoft.Sql/servers/', variables('sqldscsitedeployName'), '/databases/', parameters('dbName'), '1')]",
+            "[concat('Microsoft.Sql/servers/', variables('sqldscsitedeployName'), '/databases/', parameters('dbName'), '2')]"
           ],
           "tags": {
             "displayName": "jsWebDeploy"
@@ -260,7 +364,7 @@
               "fileUris": [
                 "[concat(parameters('_artifactsLocation'), '/', variables('jsWebDeployScriptFolder'), '/', variables('jsWebDeployScriptFileName'), parameters('_artifactsLocationSasToken'))]"
               ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('jsWebDeployScriptFolder'), '/', variables('jsWebDeployScriptFileName'), ' -firstZipPack ', parameters('firstZipPackage'), ' -secondZipPack ', parameters('secondZipPackage'))]"
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('jsWebDeployScriptFolder'), '/', variables('jsWebDeployScriptFileName'), ' -artifact ', parameters('artifact'), ' -sqlUrl ', reference(variables('sqldscsitedeployName')).fullyQualifiedDomainName, ' -sqlDBName ', parameters('dbName'), ' -sqlUsername ', parameters('sqldscsitedeployAdminLogin'), ' -sqlDBpass ', parameters('sqldscsitedeployAdminLoginPassword'))]"
             }
           }
         }
@@ -281,6 +385,80 @@
           "domainNameLabel": "[parameters('jsPublicIPDnsName')]"
         }
       }
+    },
+    {
+      "name": "[variables('sqldscsitedeployName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "sqldscsitedeploy"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('sqldscsitedeployAdminLogin')]",
+        "administratorLoginPassword": "[parameters('sqldscsitedeployAdminLoginPassword')]"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('sqldscsitedeployName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[concat(parameters('dbName'), '1')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('sqldscsitedeployName'))]"
+          ],
+          "tags": {
+            "displayName": "db01"
+          },
+          "properties": {
+            "collation": "[parameters('db01Collation')]",
+            "edition": "[parameters('db01Edition')]",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "[parameters('db01RequestedServiceObjectiveName')]"
+          }
+        },
+        {
+          "name": "[concat(parameters('dbName'), '2')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', variables('sqldscsitedeployName'))]"
+          ],
+          "tags": {
+            "displayName": "db02"
+          },
+          "properties": {
+            "collation": "[parameters('db02Collation')]",
+            "edition": "[parameters('db02Edition')]",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "[parameters('db02RequestedServiceObjectiveName')]"
+          }
+        }
+      ]
     }],
-  "outputs": {}
+  "outputs": {
+    "vmServerName": {
+      "type": "string",
+      "value": "[reference(variables('jsPublicIPName')).dnsSettings.fqdn]"
+    },
+    "sqlServerName": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqldscsitedeployName'))).fullyQualifiedDomainName]"
+    }
+  }
 }
