@@ -4,6 +4,7 @@ Param(
 
 [array]$extrarray = 0..1
 $psremoteGitUrl = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/'
+# $psremoteGitUrl = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/501dc7d24537e820df7c80bce51aba9674233b2b/201-vm-winrm-windows/'
 $psremoteConfigFiles = @('makecert.exe', 'ConfigureWinRM.ps1')
 
 function Get-PsRemoteModule ($arrayname, $psremoteGitUrl, $psremoteConfigFiles) {
